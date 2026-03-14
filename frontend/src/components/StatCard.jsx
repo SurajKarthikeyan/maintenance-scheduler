@@ -10,7 +10,7 @@ export default function StatCard({ label, value, icon: Icon, color = 'cyan', sub
   const [text, bg] = (colors[color] || colors.cyan).split(' ')
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex items-start gap-4">
+    <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex items-start gap-4 hover:border-gray-700 hover:shadow-lg hover:shadow-black/20 transition-all cursor-pointer">
       <div className={`${bg} p-2.5 rounded-lg`}>
         <Icon size={20} className={text} />
       </div>

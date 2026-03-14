@@ -41,10 +41,10 @@ export default function Dashboard() {
       <PageHeader title="Dashboard" subtitle="Live overview of your plant maintenance status" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard label="Total Machines"  value={machines.length}     icon={Cpu}           color="cyan" />
-        <StatCard label="Active Alerts"   value={alerts.length}       icon={AlertTriangle}  color="red" />
-        <StatCard label="Overdue Tasks"   value={overdueTasks.length} icon={CalendarClock}  color="amber" />
-        <StatCard label="Operational"     value={operational}          icon={CheckCircle}   color="emerald" />
+        <Link to="/machines"><StatCard label="Total Machines"  value={machines.length}     icon={Cpu}           color="cyan" /></Link>
+        <Link to="/alerts"><StatCard label="Active Alerts"   value={alerts.length}       icon={AlertTriangle}  color="red" /></Link>
+        <Link to="/tasks"><StatCard label="Overdue Tasks"   value={overdueTasks.length} icon={CalendarClock}  color="amber" /></Link>
+        <Link to="/machines?status=Operational"><StatCard label="Operational" value={operational} icon={CheckCircle} color="emerald" /></Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">

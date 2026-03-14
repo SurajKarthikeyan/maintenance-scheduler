@@ -64,6 +64,7 @@ function MachineForm({ onSubmit, onClose, loading }) {
 export default function Machines() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
+  const [sortBy, setSortBy] = useState('default')
   const [showModal, setShowModal] = useState(false)
   const qc = useQueryClient()
   const user = JSON.parse(localStorage.getItem('user') || 'null')
@@ -83,6 +84,19 @@ export default function Machines() {
                         m.location.toLowerCase().includes(search.toLowerCase())
     const matchStatus = statusFilter === 'All' || m.status === statusFilter
     return matchSearch && matchStatus
+  }).sort((a, b) => {
+    if (sortBy === 'operational-first') {
+      const order = { 'Operational': 0, 'Needs Maintenance': 1, 'Under Maintenance': 2 }
+      return (order[a.status] ?? 3) - (order[b.status] ?? 3)
+    }
+    if (sortBy === 'critical-first') {
+      const order = { 'Needs Maintenance': 0, 'Under Maintenance': 1, 'Operational': 2 }
+      return (order[a.status] ?? 3) - (order[b.status] ?? 3)
+    }
+    if (sortBy === 'most-overdue') {
+      return (b.days_overdue || 0) - (a.days_overdue || 0)
+    }
+    return a.machine_id - b.machine_id
   })
 
   return (
@@ -100,13 +114,13 @@ export default function Machines() {
         }
       />
 
-      <div className="flex gap-3 mb-6">
+      <div className="flex gap-3 mb-6 flex-wrap">
         <div className="relative flex-1 max-w-sm">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search machines..."
             className="w-full bg-gray-900 border border-gray-800 rounded-lg pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500" />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {['All', ...STATUSES].map(s => (
             <button key={s} onClick={() => setStatusFilter(s)}
               className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
@@ -116,6 +130,13 @@ export default function Machines() {
             </button>
           ))}
         </div>
+        <select value={sortBy} onChange={e => setSortBy(e.target.value)}
+          className="px-3 py-2 rounded-lg text-xs font-medium text-gray-400 border border-gray-800 bg-gray-900 focus:outline-none focus:border-cyan-500 hover:border-gray-700 transition-colors">
+          <option value="default">Default order</option>
+          <option value="operational-first">Operational first</option>
+          <option value="critical-first">Needs maintenance first</option>
+          <option value="most-overdue">Most overdue first</option>
+        </select>
       </div>
 
       {isLoading ? (
