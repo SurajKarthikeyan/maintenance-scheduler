@@ -122,6 +122,13 @@ export default function MachineDetail() {
         )}
       </div>
 
+      {machine.notes && (
+        <div className="mt-4 px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg">
+          <p className="text-xs text-gray-500 mb-1">Notes</p>
+          <p className="text-sm text-gray-300">{machine.notes}</p>
+        </div>
+      )}
+
       <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-base font-semibold text-white">Maintenance Tasks</h2>
@@ -231,6 +238,16 @@ export default function MachineDetail() {
               <input type="date" value={editForm.last_maintenance_date?.split('T')[0]}
                 onChange={e => setEditForm(f => ({ ...f, last_maintenance_date: e.target.value }))}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Notes</label>
+              <textarea
+                value={editForm.notes || ''}
+                onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))}
+                placeholder="Add any notes about this machine..."
+                rows={3}
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500 resize-none"
+              />
             </div>
             <div className="flex gap-3 pt-2">
               <button type="button" onClick={() => setShowEditModal(false)}
