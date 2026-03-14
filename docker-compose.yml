@@ -1,0 +1,178 @@
+version: "3.9"
+
+services:
+  # ─────────────────────────────────────────
+  # DATABASES
+  # ─────────────────────────────────────────
+  db-machines:
+    image: mysql:8.0
+    container_name: db-machines
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: machines_db
+      MYSQL_USER: svc_user
+      MYSQL_PASSWORD: svc_pass
+    ports:
+      - "3307:3306"
+    volumes:
+      - db-machines-data:/var/lib/mysql
+      - ./db/machine-service:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db-tasks:
+    image: mysql:8.0
+    container_name: db-tasks
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: tasks_db
+      MYSQL_USER: svc_user
+      MYSQL_PASSWORD: svc_pass
+    ports:
+      - "3308:3306"
+    volumes:
+      - db-tasks-data:/var/lib/mysql
+      - ./db/scheduler-service:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db-alerts:
+    image: mysql:8.0
+    container_name: db-alerts
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: alerts_db
+      MYSQL_USER: svc_user
+      MYSQL_PASSWORD: svc_pass
+    ports:
+      - "3309:3306"
+    volumes:
+      - db-alerts-data:/var/lib/mysql
+      - ./db/alert-service:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────
+  # MICROSERVICES
+  # ─────────────────────────────────────────
+  machine-service:
+    build: ./machine-service
+    container_name: machine-service
+    restart: unless-stopped
+    environment:
+      PORT: 3001
+      DB_HOST: db-machines
+      DB_PORT: 3306
+      DB_NAME: machines_db
+      DB_USER: svc_user
+      DB_PASSWORD: svc_pass
+    ports:
+      - "3001:3001"
+    depends_on:
+      db-machines:
+        condition: service_healthy
+    volumes:
+      - ./machine-service:/app
+      - /app/node_modules
+
+  scheduler-service:
+    build: ./scheduler-service
+    container_name: scheduler-service
+    restart: unless-stopped
+    environment:
+      PORT: 3002
+      DB_HOST: db-tasks
+      DB_PORT: 3306
+      DB_NAME: tasks_db
+      DB_USER: svc_user
+      DB_PASSWORD: svc_pass
+      MACHINE_SERVICE_URL: http://machine-service:3001
+    ports:
+      - "3002:3002"
+    depends_on:
+      db-tasks:
+        condition: service_healthy
+      machine-service:
+        condition: service_started
+    volumes:
+      - ./scheduler-service:/app
+      - /app/node_modules
+
+  alert-service:
+    build: ./alert-service
+    container_name: alert-service
+    restart: unless-stopped
+    environment:
+      PORT: 3003
+      DB_HOST: db-alerts
+      DB_PORT: 3306
+      DB_NAME: alerts_db
+      DB_USER: svc_user
+      DB_PASSWORD: svc_pass
+      MACHINE_SERVICE_URL: http://machine-service:3001
+      SCHEDULER_SERVICE_URL: http://scheduler-service:3002
+    ports:
+      - "3003:3003"
+    depends_on:
+      db-alerts:
+        condition: service_healthy
+      machine-service:
+        condition: service_started
+      scheduler-service:
+        condition: service_started
+    volumes:
+      - ./alert-service:/app
+      - /app/node_modules
+
+  gateway:
+    build: ./gateway
+    container_name: gateway
+    restart: unless-stopped
+    environment:
+      PORT: 8080
+      MACHINE_SERVICE_URL: http://machine-service:3001
+      SCHEDULER_SERVICE_URL: http://scheduler-service:3002
+      ALERT_SERVICE_URL: http://alert-service:3003
+    ports:
+      - "8080:8080"
+    depends_on:
+      - machine-service
+      - scheduler-service
+      - alert-service
+    volumes:
+      - ./gateway:/app
+      - /app/node_modules
+
+  # ─────────────────────────────────────────
+  # FRONTEND
+  # ─────────────────────────────────────────
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080
+    ports:
+      - "5173:5173"
+    depends_on:
+      - gateway
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  db-machines-data:
+  db-tasks-data:
+  db-alerts-data:
