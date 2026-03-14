@@ -85,7 +85,7 @@ export default function Users() {
                     </span>
                   </td>
                   <td className="px-5 py-3 text-gray-400">
-                    {new Date(user.created_at).toLocaleDateString()}
+                    {new Date(user.created_at).toLocaleDateString('en-GB')}
                   </td>
                   <td className="px-5 py-3 text-right">
                     {user.user_id !== currentUser?.user_id && (

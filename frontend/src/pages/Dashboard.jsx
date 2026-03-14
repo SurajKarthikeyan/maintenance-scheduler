@@ -121,7 +121,7 @@ export default function Dashboard() {
                   <tr key={task.task_id} className="hover:bg-gray-800/50 transition-colors">
                     <td className="py-2.5 text-gray-200">{task.task_description}</td>
                     <td className="py-2.5 text-gray-400">Machine #{task.machine_id}</td>
-                    <td className="py-2.5 text-gray-400">{new Date(task.scheduled_date).toLocaleDateString()}</td>
+                    <td className="py-2.5 text-gray-400">{new Date(task.scheduled_date).toLocaleDateString('en-GB')}</td>
                     <td className="py-2.5"><StatusBadge status={task.status} /></td>
                   </tr>
                 ))}

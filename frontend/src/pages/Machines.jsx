@@ -163,7 +163,7 @@ export default function Machines() {
                   <MapPin size={12} className="text-gray-600" /> {machine.location}
                 </div>
                 <div className="flex items-center gap-2 text-xs text-gray-400">
-                  <Calendar size={12} className="text-gray-600" /> Next due: {new Date(machine.next_due_date).toLocaleDateString()}
+                  <Calendar size={12} className="text-gray-600" /> Next due: {new Date(machine.next_due_date).toLocaleDateString('en-GB')}
                 </div>
                 <div className="flex items-center gap-2 text-xs text-gray-400">
                   <Clock size={12} className="text-gray-600" /> Every {machine.maintenance_interval_days} days

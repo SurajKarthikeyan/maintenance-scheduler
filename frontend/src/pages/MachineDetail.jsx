@@ -74,9 +74,9 @@ function exportCSV() {
   const rows = tasks.map(t => [
     t.task_id,
     t.task_description,
-    new Date(t.scheduled_date).toLocaleDateString(),
+    new Date(t.scheduled_date).toLocaleDateString('en-GB'),
     t.status,
-    t.completed_on ? new Date(t.completed_on).toLocaleDateString() : ''
+    t.completed_on ? new Date(t.completed_on).toLocaleDateString('en-GB') : ''
   ])
   const csv = [headers, ...rows].map(r => r.join(',')).join('\n')
   const blob = new Blob([csv], { type: 'text/csv' })
@@ -117,13 +117,13 @@ function exportPDF() {
       </head>
       <body>
         <h1>${machine.name}</h1>
-        <div class="meta">Maintenance History Report · Generated ${new Date().toLocaleDateString()}</div>
+        <div class="meta">Maintenance History Report · Generated ${new Date().toLocaleDateString('en-GB')}</div>
         ${machine.days_overdue > 0 ? `<div class="overdue">⚠ This machine is ${machine.days_overdue} days overdue for maintenance</div>` : ''}
         <div class="info-grid">
           <div class="info-box"><div class="info-label">Location</div><div class="info-value">${machine.location}</div></div>
           <div class="info-box"><div class="info-label">Status</div><div class="info-value">${machine.status}</div></div>
-          <div class="info-box"><div class="info-label">Last Serviced</div><div class="info-value">${new Date(machine.last_maintenance_date).toLocaleDateString()}</div></div>
-          <div class="info-box"><div class="info-label">Next Due</div><div class="info-value">${new Date(machine.next_due_date).toLocaleDateString()}</div></div>
+          <div class="info-box"><div class="info-label">Last Serviced</div><div class="info-value">${new Date(machine.last_maintenance_date).toLocaleDateString('en-GB')}</div></div>
+          <div class="info-box"><div class="info-label">Next Due</div><div class="info-value">${new Date(machine.next_due_date).toLocaleDateString('en-GB')}</div></div>
         </div>
         <table>
           <thead>
@@ -140,9 +140,9 @@ function exportPDF() {
               <tr>
                 <td>${t.task_id}</td>
                 <td>${t.task_description}</td>
-                <td>${new Date(t.scheduled_date).toLocaleDateString()}</td>
+                <td>${new Date(t.scheduled_date).toLocaleDateString('en-GB')}</td>
                 <td><span class="status status-${t.status.toLowerCase().replace(' ', '-')}">${t.status}</span></td>
-                <td>${t.completed_on ? new Date(t.completed_on).toLocaleDateString() : '—'}</td>
+                <td>${t.completed_on ? new Date(t.completed_on).toLocaleDateString('en-GB') : '—'}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -190,8 +190,8 @@ function exportPDF() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
           {[
             { icon: MapPin,   label: 'Location',     value: machine.location },
-            { icon: Calendar, label: 'Last Serviced', value: new Date(machine.last_maintenance_date).toLocaleDateString() },
-            { icon: Calendar, label: 'Next Due',      value: new Date(machine.next_due_date).toLocaleDateString() },
+            { icon: Calendar, label: 'Last Serviced', value: new Date(machine.last_maintenance_date).toLocaleDateString('en-GB') },
+            { icon: Calendar, label: 'Next Due',      value: new Date(machine.next_due_date).toLocaleDateString('en-GB') },
             { icon: Clock,    label: 'Interval',      value: `Every ${machine.maintenance_interval_days} days` },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="bg-gray-800/50 rounded-lg p-3">
@@ -246,8 +246,8 @@ function exportPDF() {
                 <div>
                   <p className="text-sm text-gray-200">{task.task_description}</p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Scheduled: {new Date(task.scheduled_date).toLocaleDateString()}
-                    {task.completed_on && ` · Completed: ${new Date(task.completed_on).toLocaleDateString()}`}
+                    Scheduled: {new Date(task.scheduled_date).toLocaleDateString('en-GB')}
+                    {task.completed_on && ` · Completed: ${new Date(task.completed_on).toLocaleDateString('en-GB')}`}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">

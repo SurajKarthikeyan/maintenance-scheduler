@@ -174,7 +174,7 @@ export default function Tasks() {
                   <td className="px-5 py-3 text-gray-400">
                     {machines.find(m => m.machine_id === task.machine_id)?.name || `Machine #${task.machine_id}`}
                   </td>
-                  <td className="px-5 py-3 text-gray-400">{new Date(task.scheduled_date).toLocaleDateString()}</td>
+                  <td className="px-5 py-3 text-gray-400">{new Date(task.scheduled_date).toLocaleDateString('en-GB')}</td>
                   <td className="px-5 py-3"><StatusBadge status={task.status} /></td>
                   <td className="px-5 py-3">
                     {task.status !== 'Completed' && (
