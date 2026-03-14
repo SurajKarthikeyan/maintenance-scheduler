@@ -1,121 +1,82 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { LayoutDashboard, Cpu, CalendarClock, BellRing } from 'lucide-react'
+import Dashboard from './pages/Dashboard'
+import Machines from './pages/Machines'
+import MachineDetail from './pages/MachineDetail'
+import Tasks from './pages/Tasks'
+import Alerts from './pages/Alerts'
+import './index.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: 1, staleTime: 30000 } },
+})
 
+const navItems = [
+  { to: '/',         label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/machines', label: 'Machines',  icon: Cpu },
+  { to: '/tasks',    label: 'Tasks',     icon: CalendarClock },
+  { to: '/alerts',   label: 'Alerts',    icon: BellRing },
+]
+
+export default function App() {
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <div className="min-h-screen bg-gray-950 text-gray-100 flex">
 
-      <div className="ticks"></div>
+          {/* Sidebar */}
+          <aside className="w-64 bg-gray-900 border-r border-gray-800 flex flex-col fixed h-full z-10">
+            <div className="px-6 py-6 border-b border-gray-800">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-cyan-500 flex items-center justify-center">
+                  <Cpu size={16} className="text-gray-950" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-white tracking-wide">MaintainX</p>
+                  <p className="text-xs text-gray-500">Scheduler System</p>
+                </div>
+              </div>
+            </div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
+            <nav className="flex-1 px-3 py-4 space-y-1">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === '/'}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 ${
+                      isActive
+                        ? 'bg-cyan-500/10 text-cyan-400 font-medium'
+                        : 'text-gray-400 hover:text-gray-100 hover:bg-gray-800'
+                    }`
+                  }
                 >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+                  <item.icon size={18} />
+                  {item.label}
+                </NavLink>
+              ))}     
+            </nav>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+            <div className="px-6 py-4 border-t border-gray-800">
+              <p className="text-xs text-gray-600">v1.0.0 · NTT Data Case Study</p>
+            </div>
+          </aside>
+
+          {/* Main content */}
+          <main className="flex-1 ml-64 min-h-screen">
+            <Routes>
+              <Route path="/"             element={<Dashboard />} />
+              <Route path="/machines"     element={<Machines />} />
+              <Route path="/machines/:id" element={<MachineDetail />} />
+              <Route path="/tasks"        element={<Tasks />} />
+              <Route path="/alerts"       element={<Alerts />} />
+            </Routes>
+          </main>
+
+        </div>
+      </BrowserRouter>
+    </QueryClientProvider>
   )
 }
-
-export default App
