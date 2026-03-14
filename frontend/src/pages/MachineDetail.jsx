@@ -5,7 +5,7 @@ import { machinesApi } from '../api/machines'
 import { tasksApi } from '../api/tasks'
 import StatusBadge from '../components/StatusBadge'
 import Modal from '../components/Modal'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 
 
 const TASK_STATUSES = ['Scheduled', 'Pending', 'In Progress', 'Completed']
