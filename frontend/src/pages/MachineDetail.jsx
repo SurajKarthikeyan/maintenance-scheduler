@@ -69,6 +69,95 @@ export default function MachineDetail() {
   if (isLoading) return <div className="p-8 text-gray-500">Loading...</div>
   if (!machine) return <div className="p-8 text-gray-500">Machine not found.</div>
 
+function exportCSV() {
+  const headers = ['Task ID', 'Description', 'Scheduled Date', 'Status', 'Completed On']
+  const rows = tasks.map(t => [
+    t.task_id,
+    t.task_description,
+    new Date(t.scheduled_date).toLocaleDateString(),
+    t.status,
+    t.completed_on ? new Date(t.completed_on).toLocaleDateString() : ''
+  ])
+  const csv = [headers, ...rows].map(r => r.join(',')).join('\n')
+  const blob = new Blob([csv], { type: 'text/csv' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${machine.name}-maintenance-history.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+function exportPDF() {
+  const printWindow = window.open('', '_blank')
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>${machine.name} - Maintenance History</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 32px; color: #111; }
+          h1 { font-size: 24px; margin-bottom: 4px; }
+          .meta { color: #666; font-size: 14px; margin-bottom: 24px; }
+          .info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+          .info-box { background: #f5f5f5; border-radius: 8px; padding: 12px; }
+          .info-label { font-size: 11px; color: #888; margin-bottom: 4px; }
+          .info-value { font-size: 14px; font-weight: bold; }
+          table { width: 100%; border-collapse: collapse; }
+          th { background: #111; color: white; text-align: left; padding: 10px 12px; font-size: 12px; }
+          td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid #eee; }
+          tr:nth-child(even) td { background: #f9f9f9; }
+          .status { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+          .status-completed { background: #d1fae5; color: #065f46; }
+          .status-scheduled { background: #dbeafe; color: #1e40af; }
+          .status-pending { background: #fef3c7; color: #92400e; }
+          .status-progress { background: #ede9fe; color: #5b21b6; }
+          .footer { margin-top: 32px; font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 12px; }
+          .overdue { background: #fee2e2; color: #991b1b; padding: 8px 12px; border-radius: 6px; margin-bottom: 16px; font-size: 13px; }
+        </style>
+      </head>
+      <body>
+        <h1>${machine.name}</h1>
+        <div class="meta">Maintenance History Report · Generated ${new Date().toLocaleDateString()}</div>
+        ${machine.days_overdue > 0 ? `<div class="overdue">⚠ This machine is ${machine.days_overdue} days overdue for maintenance</div>` : ''}
+        <div class="info-grid">
+          <div class="info-box"><div class="info-label">Location</div><div class="info-value">${machine.location}</div></div>
+          <div class="info-box"><div class="info-label">Status</div><div class="info-value">${machine.status}</div></div>
+          <div class="info-box"><div class="info-label">Last Serviced</div><div class="info-value">${new Date(machine.last_maintenance_date).toLocaleDateString()}</div></div>
+          <div class="info-box"><div class="info-label">Next Due</div><div class="info-value">${new Date(machine.next_due_date).toLocaleDateString()}</div></div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Description</th>
+              <th>Scheduled</th>
+              <th>Status</th>
+              <th>Completed</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tasks.map(t => `
+              <tr>
+                <td>${t.task_id}</td>
+                <td>${t.task_description}</td>
+                <td>${new Date(t.scheduled_date).toLocaleDateString()}</td>
+                <td><span class="status status-${t.status.toLowerCase().replace(' ', '-')}">${t.status}</span></td>
+                <td>${t.completed_on ? new Date(t.completed_on).toLocaleDateString() : '—'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        ${machine.notes ? `<div style="margin-top:24px"><strong>Notes:</strong><p style="color:#444;margin-top:4px">${machine.notes}</p></div>` : ''}
+        <div class="footer">MaintainX · NTT Data Case Study · Machine ID #${machine.machine_id}</div>
+      </body>
+    </html>
+  `)
+  printWindow.document.close()
+  printWindow.print()
+}
+
+
+
   return (
     <div className="p-8">
       <Link to="/machines" className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-200 mb-6 transition-colors">
@@ -132,10 +221,20 @@ export default function MachineDetail() {
       <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-base font-semibold text-white">Maintenance Tasks</h2>
-          <button onClick={() => setShowTaskModal(true)}
-            className="flex items-center gap-2 px-3 py-1.5 bg-cyan-500 text-gray-950 rounded-lg text-xs font-medium hover:bg-cyan-400 transition-colors">
-            <Plus size={14} /> Schedule Task
-          </button>
+          <div className="flex gap-2">
+            <button onClick={exportCSV}
+              className="flex items-center gap-2 px-3 py-1.5 border border-gray-700 text-gray-400 rounded-lg text-xs hover:bg-gray-800 transition-colors">
+              Export CSV
+            </button>
+            <button onClick={exportPDF}
+              className="flex items-center gap-2 px-3 py-1.5 border border-gray-700 text-gray-400 rounded-lg text-xs hover:bg-gray-800 transition-colors">
+              Export PDF
+            </button>
+            <button onClick={() => setShowTaskModal(true)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-cyan-500 text-gray-950 rounded-lg text-xs font-medium hover:bg-cyan-400 transition-colors">
+              <Plus size={14} /> Schedule Task
+            </button>
+          </div>
         </div>
 
         {tasks.length === 0 ? (
