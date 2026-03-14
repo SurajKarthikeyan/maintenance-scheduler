@@ -75,7 +75,7 @@ export default function Tasks() {
         <select value={machineFilter} onChange={e => setMachineFilter(e.target.value)}
           className="px-3 py-2 rounded-lg text-xs font-medium text-gray-400 border border-gray-800 bg-gray-900 focus:outline-none focus:border-cyan-500 hover:border-gray-700 transition-colors">
           <option value="All">All machines</option>
-          {machines.map(m => (
+          {[...machines].sort((a, b) => a.name.localeCompare(b.name)).map(m => (
             <option key={m.machine_id} value={m.machine_id}>{m.name}</option>
           ))}
         </select>
@@ -151,7 +151,9 @@ export default function Tasks() {
               <select required value={form.machine_id} onChange={e => setForm(f => ({ ...f, machine_id: e.target.value }))}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500">
                 <option value="">Select a machine...</option>
-                {machines.map(m => <option key={m.machine_id} value={m.machine_id}>{m.name}</option>)}
+                  {[...machines].sort((a, b) => a.name.localeCompare(b.name)).map(m => (
+                      <option key={m.machine_id} value={m.machine_id}>{m.name}</option>
+                    ))}
               </select>
             </div>
             <div>
