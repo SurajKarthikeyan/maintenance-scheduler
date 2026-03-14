@@ -8,6 +8,7 @@ import StatCard from '../components/StatCard'
 import StatusBadge from '../components/StatusBadge'
 import PageHeader from '../components/PageHeader'
 import { Link } from 'react-router-dom'
+import { useState } from 'react'
 
 const STATUS_COLORS = {
   Operational: '#10b981',
@@ -15,39 +16,91 @@ const STATUS_COLORS = {
   'Under Maintenance': '#3b82f6',
 }
 
+const RANGES = [
+  { label: '7 days',  value: 7 },
+  { label: '30 days', value: 30 },
+  { label: '90 days', value: 90 },
+  { label: 'All time', value: null },
+]
+
 export default function Dashboard() {
+  const [range, setRange] = useState(30)
+
   const { data: machinesRes } = useQuery({ queryKey: ['machines'], queryFn: () => machinesApi.getAll() })
   const { data: overdueTasksRes } = useQuery({ queryKey: ['tasks-overdue'], queryFn: () => tasksApi.getOverdue() })
   const { data: alertsRes } = useQuery({ queryKey: ['alerts'], queryFn: () => alertsApi.getAll({ resolved: false }) })
-  const { data: upcomingRes } = useQuery({ queryKey: ['tasks-upcoming'], queryFn: () => tasksApi.getUpcoming(30) })
+  const { data: upcomingRes } = useQuery({ queryKey: ['tasks-upcoming', range], queryFn: () => tasksApi.getUpcoming(range || 3650) })
 
   const machines = machinesRes?.data?.data || []
-  const overdueTasks = overdueTasksRes?.data?.data || []
-  const alerts = alertsRes?.data?.data || []
+  const allOverdueTasks = overdueTasksRes?.data?.data || []
+  const allAlerts = alertsRes?.data?.data || []
   const upcoming = upcomingRes?.data?.data || []
+
+  // Filter by date range
+  const cutoff = range ? new Date(Date.now() - range * 24 * 60 * 60 * 1000) : null
+
+  const overdueTasks = cutoff
+    ? allOverdueTasks.filter(t => new Date(t.scheduled_date) >= cutoff)
+    : allOverdueTasks
+
+  const alerts = cutoff
+    ? allAlerts.filter(a => new Date(a.created_at) >= cutoff)
+    : allAlerts
 
   const operational = machines.filter(m => m.status === 'Operational').length
   const needsMaintenance = machines.filter(m => m.status === 'Needs Maintenance').length
   const underMaintenance = machines.filter(m => m.status === 'Under Maintenance').length
 
   const chartData = [
-    { name: 'Operational', value: operational },
-    { name: 'Needs Maint.', value: needsMaintenance },
-    { name: 'Under Maint.', value: underMaintenance },
+    { name: 'Operational',   value: operational },
+    { name: 'Needs Maint.',  value: needsMaintenance },
+    { name: 'Under Maint.',  value: underMaintenance },
   ]
 
   return (
     <div className="p-8">
-      <PageHeader title="Dashboard" subtitle="Live overview of your plant maintenance status" />
+      <PageHeader
+        title="Dashboard"
+        subtitle="Live overview of your plant maintenance status"
+        action={
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500">Showing:</span>
+            <div className="flex gap-1">
+              {RANGES.map(r => (
+                <button key={r.label} onClick={() => setRange(r.value)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    range === r.value
+                      ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+                      : 'text-gray-400 border border-gray-800 hover:border-gray-700'
+                  }`}>
+                  {r.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        }
+      />
 
+      {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Link to="/machines"><StatCard label="Total Machines"  value={machines.length}     icon={Cpu}           color="cyan" /></Link>
-        <Link to="/alerts"><StatCard label="Active Alerts"   value={alerts.length}       icon={AlertTriangle}  color="red" /></Link>
-        <Link to="/tasks"><StatCard label="Overdue Tasks"   value={overdueTasks.length} icon={CalendarClock}  color="amber" /></Link>
-        <Link to="/machines?status=Operational"><StatCard label="Operational" value={operational} icon={CheckCircle} color="emerald" /></Link>
+        <Link to="/machines">
+          <StatCard label="Total Machines" value={machines.length} icon={Cpu} color="cyan" />
+        </Link>
+        <Link to="/alerts">
+          <StatCard label="Active Alerts" value={alerts.length} icon={AlertTriangle} color="red"
+            sub={range ? `Last ${range} days` : 'All time'} />
+        </Link>
+        <Link to="/tasks">
+          <StatCard label="Overdue Tasks" value={overdueTasks.length} icon={CalendarClock} color="amber"
+            sub={range ? `Last ${range} days` : 'All time'} />
+        </Link>
+        <Link to="/machines?status=Operational">
+          <StatCard label="Operational" value={operational} icon={CheckCircle} color="emerald" />
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Machine status chart */}
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-6">
             <TrendingUp size={16} className="text-cyan-400" />
@@ -71,6 +124,7 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
 
+        {/* Active alerts */}
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -95,16 +149,21 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Upcoming tasks */}
       <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <CalendarClock size={16} className="text-cyan-400" />
-            <h2 className="text-sm font-semibold text-white">Upcoming Tasks (next 30 days)</h2>
+            <h2 className="text-sm font-semibold text-white">
+              Upcoming Tasks {range ? `(next ${range} days)` : '(all)'}
+            </h2>
           </div>
           <Link to="/tasks" className="text-xs text-cyan-400 hover:text-cyan-300">View all →</Link>
         </div>
         {upcoming.length === 0 ? (
-          <p className="text-sm text-gray-500 py-4 text-center">No upcoming tasks in the next 30 days</p>
+          <p className="text-sm text-gray-500 py-4 text-center">
+            No upcoming tasks in the next {range || 'scheduled'} days
+          </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
