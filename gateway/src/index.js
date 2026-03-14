@@ -1,21 +1,20 @@
 require("dotenv").config();
 const express = require("express");
-const proxy = require("express-http-proxy");
+const { createProxyMiddleware } = require("http-proxy-middleware");
 const cors = require("cors");
 const morgan = require("morgan");
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-const MACHINE_SERVICE_URL  = process.env.MACHINE_SERVICE_URL  || "http://localhost:3001";
+const MACHINE_SERVICE_URL   = process.env.MACHINE_SERVICE_URL   || "http://localhost:3001";
 const SCHEDULER_SERVICE_URL = process.env.SCHEDULER_SERVICE_URL || "http://localhost:3002";
-const ALERT_SERVICE_URL    = process.env.ALERT_SERVICE_URL    || "http://localhost:3003";
+const ALERT_SERVICE_URL     = process.env.ALERT_SERVICE_URL     || "http://localhost:3003";
 
-app.options('*', cors())
+app.options('*', cors());
 app.use(cors());
 app.use(morgan("dev"));
 
-// Gateway health check
 app.get("/health", (req, res) => {
   res.json({
     service: "gateway",
