@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (user_id),
   INDEX idx_username (username)
+  notes TEXT DEFAULT NULL,
 );
 
 INSERT INTO users (username, password_hash, role) VALUES (
@@ -39,3 +40,4 @@ INSERT INTO users (username, password_hash, role) VALUES (
   '$2b$12$fHDLoJkPjcEvS1ADB2/YEudvaM8qUv1OlvpuZpUUfqPWr3tdmHbRi',
   'admin'
 );
+
