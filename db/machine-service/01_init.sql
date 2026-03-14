@@ -23,4 +23,19 @@ INSERT INTO machines (machine_id, name, location, last_maintenance_date, mainten
   (5, 'Generator G1',     'Plant 2 - Power Room',     '2025-07-01', 180, 'Operational');
 
 
-db/machine-service/01_init.sql
+CREATE TABLE IF NOT EXISTS users (
+  user_id       INT           NOT NULL AUTO_INCREMENT,
+  username      VARCHAR(50)   NOT NULL UNIQUE,
+  password_hash VARCHAR(255)  NOT NULL,
+  role          ENUM('admin', 'technician') NOT NULL DEFAULT 'technician',
+  created_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_id),
+  INDEX idx_username (username)
+);
+
+INSERT INTO users (username, password_hash, role) VALUES (
+  'admin',
+  '$2b$12$fHDLoJkPjcEvS1ADB2/YEudvaM8qUv1OlvpuZpUUfqPWr3tdmHbRi',
+  'admin'
+);
