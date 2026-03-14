@@ -30,18 +30,27 @@ app.get("/health", (req, res) => {
 
 // Route: /api/machines -> machine-service
 app.use("/api/machines", proxy(MACHINE_SERVICE_URL, {
-  proxyReqPathResolver: (req) => `/api/machines${req.url}`,
-}));
+  proxyReqPathResolver: (req) => {
+    const path = `/api/machines${req.url}`
+    return path.endsWith('/') ? path.slice(0, -1) : path
+  },
+}))
 
 // Route: /api/tasks -> scheduler-service
 app.use("/api/tasks", proxy(SCHEDULER_SERVICE_URL, {
-  proxyReqPathResolver: (req) => `/api/tasks${req.url}`,
-}));
+  proxyReqPathResolver: (req) => {
+    const path = `/api/tasks${req.url}`
+    return path.endsWith('/') ? path.slice(0, -1) : path
+  },
+}))
 
 // Route: /api/alerts -> alert-service
 app.use("/api/alerts", proxy(ALERT_SERVICE_URL, {
-  proxyReqPathResolver: (req) => `/api/alerts${req.url}`,
-}));
+  proxyReqPathResolver: (req) => {
+    const path = `/api/alerts${req.url}`
+    return path.endsWith('/') ? path.slice(0, -1) : path
+  },
+}))
 
 app.use((req, res) => {
   res.status(404).json({ error: "No matching gateway route" });
