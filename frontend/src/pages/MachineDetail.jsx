@@ -219,7 +219,7 @@ export default function MachineDetail() {
 
       {showEditModal && (
         <Modal title="Edit Machine" onClose={() => setShowEditModal(false)}>
-          <form onSubmit={e => { e.preventDefault(); updateMachine.mutate(editForm) }} className="space-y-4">
+          <form onSubmit={e => { e.preventDefault(); updateMachine.mutate({ ...editForm, last_maintenance_date: editForm.last_maintenance_date?.split('T')[0] }) }} className="space-y-4">
             <div>
               <label className="block text-xs text-gray-400 mb-1">Status</label>
               <select value={editForm.status} onChange={e => setEditForm(f => ({ ...f, status: e.target.value }))}
