@@ -40,7 +40,7 @@ function Sidebar() {
           </div>
           <div>
             <p className="text-sm font-bold text-white tracking-wide">MaintainX</p>
-            <p className="text-xs text-gray-500">Scheduler System</p>
+            <p className="text-xs text-gray-500">Scheduler System v1.1</p>
           </div>
         </div>
       </div>
