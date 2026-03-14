@@ -21,3 +21,6 @@ INSERT INTO machines (machine_id, name, location, last_maintenance_date, mainten
   (3, 'Conveyor Line 3',  'Plant 2 - Packaging Area', '2025-12-20', 7,   'Operational'),
   (4, 'Pump X7',          'Plant 1 - Basement',       '2025-06-01', 90,  'Under Maintenance'),
   (5, 'Generator G1',     'Plant 2 - Power Room',     '2025-07-01', 180, 'Operational');
+
+
+db/machine-service/01_init.sql

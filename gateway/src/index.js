@@ -22,7 +22,6 @@ app.use(morgan("dev"));
 
 /**
  * Health check endpoint — returns gateway status and upstream URLs
- * Useful for verifying all services are correctly wired up
  */
 app.get("/health", (req, res) => {
   res.json({
@@ -38,43 +37,72 @@ app.get("/health", (req, res) => {
 });
 
 /**
- * Proxy /api/machines/* → Machine Service
- * Handles machine registry, status, and due date queries
+ * Proxy /api/auth/* -> machine-service
+ * Login is public — no auth required here
+ */
+app.use("/api/auth", createProxyMiddleware({
+  target: MACHINE_SERVICE_URL,
+  changeOrigin: true,
+  on: {
+    proxyRes: (proxyRes) => {
+      proxyRes.headers['Access-Control-Allow-Origin'] = '*';
+    }
+  }
+}));
+
+/**
+ * Proxy /api/machines/* -> machine-service
+ * Forwards Authorization header so JWT middleware can validate it
  */
 app.use("/api/machines", createProxyMiddleware({
   target: MACHINE_SERVICE_URL,
   changeOrigin: true,
   on: {
+    proxyReq: (proxyReq, req) => {
+      if (req.headers.authorization) {
+        proxyReq.setHeader("authorization", req.headers.authorization);
+      }
+    },
     proxyRes: (proxyRes) => {
-      proxyRes.headers['Access-Control-Allow-Origin'] = '*'
+      proxyRes.headers['Access-Control-Allow-Origin'] = '*';
     }
   }
 }));
 
 /**
- * Proxy /api/tasks/* → Scheduler Service
- * Handles task scheduling, updates, and inter-service status sync
+ * Proxy /api/tasks/* -> scheduler-service
+ * Forwards Authorization header for future auth protection on scheduler
  */
 app.use("/api/tasks", createProxyMiddleware({
   target: SCHEDULER_SERVICE_URL,
   changeOrigin: true,
   on: {
+    proxyReq: (proxyReq, req) => {
+      if (req.headers.authorization) {
+        proxyReq.setHeader("authorization", req.headers.authorization);
+      }
+    },
     proxyRes: (proxyRes) => {
-      proxyRes.headers['Access-Control-Allow-Origin'] = '*'
+      proxyRes.headers['Access-Control-Allow-Origin'] = '*';
     }
   }
 }));
 
 /**
- * Proxy /api/alerts/* → Alert Service
- * Handles overdue alerts, manual checks, and alert resolution
+ * Proxy /api/alerts/* -> alert-service
+ * Forwards Authorization header for future auth protection on alerts
  */
 app.use("/api/alerts", createProxyMiddleware({
   target: ALERT_SERVICE_URL,
   changeOrigin: true,
   on: {
+    proxyReq: (proxyReq, req) => {
+      if (req.headers.authorization) {
+        proxyReq.setHeader("authorization", req.headers.authorization);
+      }
+    },
     proxyRes: (proxyRes) => {
-      proxyRes.headers['Access-Control-Allow-Origin'] = '*'
+      proxyRes.headers['Access-Control-Allow-Origin'] = '*';
     }
   }
 }));

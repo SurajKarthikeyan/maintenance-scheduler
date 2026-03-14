@@ -3,6 +3,8 @@ const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
 const machineRoutes = require("./routes/machines");
+const authRoutes = require("./routes/auth");
+const { requireAuth } = require("./middleware/auth");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -11,18 +13,16 @@ app.use(cors());
 app.use(morgan("dev"));
 app.use(express.json());
 
-/**
- * Health check endpoint — used by Docker healthcheck and Railway
- */
+// Health check — public
 app.get("/health", (req, res) => {
   res.json({ service: "machine-service", status: "ok", timestamp: new Date() });
 });
 
-/**
- * Machine routes — handles all CRUD operations and computed fields
- * next_due_date and days_overdue are calculated live in SQL
- */
-app.use("/api/machines", machineRoutes);
+// Auth routes — login is public, other auth routes handle their own protection
+app.use("/api/auth", authRoutes);
+
+// Machine routes — all protected, require valid JWT
+app.use("/api/machines", requireAuth, machineRoutes);
 
 // 404 handler
 app.use((req, res) => {
