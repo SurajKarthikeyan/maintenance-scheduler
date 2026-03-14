@@ -12,6 +12,7 @@ const STATUSES = ['Scheduled', 'Pending', 'In Progress', 'Completed']
 export default function Tasks() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
+  const [machineFilter, setMachineFilter] = useState('All')
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ machine_id: '', task_description: '', scheduled_date: '', status: 'Scheduled' })
   const qc = useQueryClient()
@@ -41,13 +42,14 @@ export default function Tasks() {
     onSuccess: () => qc.invalidateQueries(['tasks']),
   })
 
+  const machines = machinesRes?.data?.data || []
+
   const tasks = (tasksRes?.data?.data || []).filter(t => {
     const matchSearch = t.task_description.toLowerCase().includes(search.toLowerCase())
     const matchStatus = statusFilter === 'All' || t.status === statusFilter
-    return matchSearch && matchStatus
+    const matchMachine = machineFilter === 'All' || t.machine_id === parseInt(machineFilter)
+    return matchSearch && matchStatus && matchMachine
   })
-
-  const machines = machinesRes?.data?.data || []
 
   return (
     <div className="p-8">
@@ -62,12 +64,23 @@ export default function Tasks() {
         }
       />
 
-      <div className="flex gap-3 mb-6">
+      <div className="flex gap-3 mb-6 flex-wrap">
         <div className="relative flex-1 max-w-sm">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search tasks..."
             className="w-full bg-gray-900 border border-gray-800 rounded-lg pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500" />
         </div>
+
+        {/* Machine filter */}
+        <select value={machineFilter} onChange={e => setMachineFilter(e.target.value)}
+          className="px-3 py-2 rounded-lg text-xs font-medium text-gray-400 border border-gray-800 bg-gray-900 focus:outline-none focus:border-cyan-500 hover:border-gray-700 transition-colors">
+          <option value="All">All machines</option>
+          {machines.map(m => (
+            <option key={m.machine_id} value={m.machine_id}>{m.name}</option>
+          ))}
+        </select>
+
+        {/* Status filter */}
         <div className="flex gap-2 flex-wrap">
           {['All', ...STATUSES].map(s => (
             <button key={s} onClick={() => setStatusFilter(s)}

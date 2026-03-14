@@ -2,17 +2,24 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { AlertTriangle, RefreshCw, CheckCircle } from 'lucide-react'
 import { alertsApi } from '../api/alerts'
+import { machinesApi } from '../api/machines'
 import StatusBadge from '../components/StatusBadge'
 import PageHeader from '../components/PageHeader'
 
 export default function Alerts() {
   const [filter, setFilter] = useState('active')
+  const [machineFilter, setMachineFilter] = useState('All')
   const qc = useQueryClient()
 
   const { data, isLoading } = useQuery({
     queryKey: ['alerts', filter],
     queryFn: () => alertsApi.getAll(filter === 'active' ? { resolved: false } : filter === 'resolved' ? { resolved: true } : {}),
     refetchInterval: 60000,
+  })
+
+  const { data: machinesRes } = useQuery({
+    queryKey: ['machines'],
+    queryFn: () => machinesApi.getAll(),
   })
 
   const resolve = useMutation({
@@ -25,7 +32,11 @@ export default function Alerts() {
     onSuccess: () => qc.invalidateQueries(['alerts']),
   })
 
-  const alerts = data?.data?.data || []
+  const machines = machinesRes?.data?.data || []
+
+  const alerts = (data?.data?.data || []).filter(a =>
+    machineFilter === 'All' || a.machine_id === parseInt(machineFilter)
+  )
 
   return (
     <div className="p-8">
@@ -42,19 +53,31 @@ export default function Alerts() {
         }
       />
 
-      <div className="flex gap-2 mb-6">
-        {[
-          { key: 'active',   label: 'Active' },
-          { key: 'resolved', label: 'Resolved' },
-          { key: 'all',      label: 'All' },
-        ].map(({ key, label }) => (
-          <button key={key} onClick={() => setFilter(key)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filter === key ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'text-gray-400 border border-gray-800 hover:border-gray-700'
-            }`}>
-            {label}
-          </button>
-        ))}
+      <div className="flex gap-3 mb-6 flex-wrap items-center">
+        {/* Status filter tabs */}
+        <div className="flex gap-2">
+          {[
+            { key: 'active',   label: 'Active' },
+            { key: 'resolved', label: 'Resolved' },
+            { key: 'all',      label: 'All' },
+          ].map(({ key, label }) => (
+            <button key={key} onClick={() => setFilter(key)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                filter === key ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'text-gray-400 border border-gray-800 hover:border-gray-700'
+              }`}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Machine filter */}
+        <select value={machineFilter} onChange={e => setMachineFilter(e.target.value)}
+          className="px-3 py-2 rounded-lg text-xs font-medium text-gray-400 border border-gray-800 bg-gray-900 focus:outline-none focus:border-cyan-500 hover:border-gray-700 transition-colors">
+          <option value="All">All machines</option>
+          {machines.map(m => (
+            <option key={m.machine_id} value={m.machine_id}>{m.name}</option>
+          ))}
+        </select>
       </div>
 
       {isLoading ? (
