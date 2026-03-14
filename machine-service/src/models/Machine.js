@@ -1,12 +1,19 @@
 const { getPool } = require("../../config/db");
 
-// Helper: calculate next due date
+/**
+ * Helper: calculate next due date from last maintenance + interval
+ * This is also computed in SQL for every query, but kept here for reference
+ */
 function calcNextDueDate(lastMaintenanceDate, intervalDays) {
   const last = new Date(lastMaintenanceDate);
   last.setDate(last.getDate() + intervalDays);
   return last.toISOString().split("T")[0];
 }
 
+/**
+ * Fetch all machines with computed next_due_date and days_overdue
+ * These are calculated live in SQL so they're always accurate
+ */
 async function getAllMachines() {
   const pool = getPool();
   const [rows] = await pool.query(`
@@ -19,6 +26,9 @@ async function getAllMachines() {
   return rows;
 }
 
+/**
+ * Fetch a single machine by ID with computed fields
+ */
 async function getMachineById(id) {
   const pool = getPool();
   const [rows] = await pool.query(
@@ -31,6 +41,9 @@ async function getMachineById(id) {
   return rows[0] || null;
 }
 
+/**
+ * Create a new machine with default interval of 30 days and Operational status
+ */
 async function createMachine(data) {
   const pool = getPool();
   const { name, location, last_maintenance_date, maintenance_interval_days, status } = data;
@@ -42,6 +55,10 @@ async function createMachine(data) {
   return getMachineById(result.insertId);
 }
 
+/**
+ * Update machine fields dynamically — only updates fields that are provided
+ * Allows partial updates (e.g. status only, or interval only)
+ */
 async function updateMachine(id, data) {
   const pool = getPool();
   const fields = [];
@@ -62,12 +79,18 @@ async function updateMachine(id, data) {
   return getMachineById(id);
 }
 
+/**
+ * Delete a machine by ID — returns true if deleted, false if not found
+ */
 async function deleteMachine(id) {
   const pool = getPool();
   const [result] = await pool.query("DELETE FROM machines WHERE machine_id = ?", [id]);
   return result.affectedRows > 0;
 }
 
+/**
+ * Filter machines by status (Operational, Needs Maintenance, Under Maintenance)
+ */
 async function getMachinesByStatus(status) {
   const pool = getPool();
   const [rows] = await pool.query(
@@ -81,6 +104,10 @@ async function getMachinesByStatus(status) {
   return rows;
 }
 
+/**
+ * Get all machines where today is past their next due date
+ * Ordered by most overdue first
+ */
 async function getOverdueMachines() {
   const pool = getPool();
   const [rows] = await pool.query(`

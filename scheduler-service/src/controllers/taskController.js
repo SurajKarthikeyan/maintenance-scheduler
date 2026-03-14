@@ -3,7 +3,12 @@ const Task = require("../models/Task");
 
 const MACHINE_SERVICE_URL = process.env.MACHINE_SERVICE_URL || "http://localhost:3001";
 
-// Map task status -> machine status
+/**
+ * Maps task status changes to machine status updates
+ * When a task moves to In Progress, the machine goes Under Maintenance
+ * When a task is Completed, the machine returns to Operational
+ * Scheduled and Pending tasks don't trigger a machine status change
+ */
 const TASK_TO_MACHINE_STATUS = {
   "In Progress": "Under Maintenance",
   "Completed":   "Operational",
@@ -11,12 +16,18 @@ const TASK_TO_MACHINE_STATUS = {
   "Pending":     null,
 };
 
+/**
+ * Inter-service communication: notify Machine Service of status change
+ * Also updates last_maintenance_date when a task is completed
+ * Failures are logged but don't break the task update
+ */
 async function syncMachineStatus(machineId, taskStatus) {
   const machineStatus = TASK_TO_MACHINE_STATUS[taskStatus];
   if (!machineStatus) return;
   try {
     await axios.patch(`${MACHINE_SERVICE_URL}/api/machines/${machineId}`, {
       status: machineStatus,
+      // When completed, update last maintenance date to today
       ...(taskStatus === "Completed" && {
         last_maintenance_date: new Date().toISOString().split("T")[0],
       }),
@@ -26,6 +37,10 @@ async function syncMachineStatus(machineId, taskStatus) {
   }
 }
 
+/**
+ * GET /api/tasks
+ * List all tasks with optional filters: machine_id, status
+ */
 async function listTasks(req, res, next) {
   try {
     const filters = {};
@@ -38,6 +53,10 @@ async function listTasks(req, res, next) {
   }
 }
 
+/**
+ * GET /api/tasks/:id
+ * Get a single task by ID
+ */
 async function getTask(req, res, next) {
   try {
     const task = await Task.getTaskById(req.params.id);
@@ -48,6 +67,11 @@ async function getTask(req, res, next) {
   }
 }
 
+/**
+ * POST /api/tasks
+ * Create a new maintenance task
+ * Required fields: machine_id, task_description, scheduled_date
+ */
 async function createTask(req, res, next) {
   try {
     const { machine_id, task_description, scheduled_date } = req.body;
@@ -64,6 +88,11 @@ async function createTask(req, res, next) {
   }
 }
 
+/**
+ * PATCH /api/tasks/:id
+ * Update a task — if status changes, triggers machine status sync
+ * This is the core inter-service communication trigger
+ */
 async function updateTask(req, res, next) {
   try {
     const existing = await Task.getTaskById(req.params.id);
@@ -71,7 +100,7 @@ async function updateTask(req, res, next) {
 
     const updated = await Task.updateTask(req.params.id, req.body);
 
-    // Inter-service: sync machine status when task status changes
+    // Only sync if status actually changed
     if (req.body.status && req.body.status !== existing.status) {
       await syncMachineStatus(existing.machine_id, req.body.status);
     }
@@ -82,6 +111,10 @@ async function updateTask(req, res, next) {
   }
 }
 
+/**
+ * DELETE /api/tasks/:id
+ * Delete a task by ID
+ */
 async function deleteTask(req, res, next) {
   try {
     const deleted = await Task.deleteTask(req.params.id);
@@ -92,6 +125,11 @@ async function deleteTask(req, res, next) {
   }
 }
 
+/**
+ * GET /api/tasks/upcoming?days=7
+ * Get tasks due within the next N days (default 7)
+ * Only returns Scheduled and Pending tasks
+ */
 async function getUpcomingTasks(req, res, next) {
   try {
     const days = parseInt(req.query.days) || 7;
@@ -102,6 +140,10 @@ async function getUpcomingTasks(req, res, next) {
   }
 }
 
+/**
+ * GET /api/tasks/overdue
+ * Get tasks past their scheduled date that are not yet completed
+ */
 async function getOverdueTasks(req, res, next) {
   try {
     const tasks = await Task.getOverdueTasks();
@@ -111,6 +153,10 @@ async function getOverdueTasks(req, res, next) {
   }
 }
 
+/**
+ * GET /api/tasks/machine/:machineId
+ * Get all tasks for a specific machine ordered by scheduled date
+ */
 async function getTasksByMachine(req, res, next) {
   try {
     const tasks = await Task.getTasksByMachine(req.params.machineId);
