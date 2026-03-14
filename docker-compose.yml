@@ -76,6 +76,7 @@ services:
       DB_NAME: machines_db
       DB_USER: svc_user
       DB_PASSWORD: svc_pass
+      JWT_SECRET: x7k9m2p4q8r3s6t1u5v0w
     ports:
       - "3001:3001"
     depends_on:
@@ -143,6 +144,7 @@ services:
       MACHINE_SERVICE_URL: http://machine-service:3001
       SCHEDULER_SERVICE_URL: http://scheduler-service:3002
       ALERT_SERVICE_URL: http://alert-service:3003
+      JWT_SECRET: x7k9m2p4q8r3s6t1u5v0w
     ports:
       - "8080:8080"
     depends_on:
