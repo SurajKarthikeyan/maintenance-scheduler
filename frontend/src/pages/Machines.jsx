@@ -66,6 +66,7 @@ export default function Machines() {
   const [statusFilter, setStatusFilter] = useState('All')
   const [showModal, setShowModal] = useState(false)
   const qc = useQueryClient()
+  const user = JSON.parse(localStorage.getItem('user') || 'null')
 
   const { data, isLoading } = useQuery({
     queryKey: ['machines'],
@@ -90,10 +91,12 @@ export default function Machines() {
         title="Machines"
         subtitle={`${machines.length} machine${machines.length !== 1 ? 's' : ''} found`}
         action={
-          <button onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-cyan-500 text-gray-950 rounded-lg text-sm font-medium hover:bg-cyan-400 transition-colors">
-            <Plus size={16} /> Add Machine
-          </button>
+          user?.role === 'admin' && (
+            <button onClick={() => setShowModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-cyan-500 text-gray-950 rounded-lg text-sm font-medium hover:bg-cyan-400 transition-colors">
+              <Plus size={16} /> Add Machine
+            </button>
+          )
         }
       />
 
