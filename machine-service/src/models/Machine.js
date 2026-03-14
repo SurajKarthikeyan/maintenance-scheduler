@@ -64,7 +64,7 @@ async function updateMachine(id, data) {
   const fields = [];
   const values = [];
 
-  const allowed = ["name", "location", "last_maintenance_date", "maintenance_interval_days", "status"];
+  const allowed = ["name", "location", "last_maintenance_date", "maintenance_interval_days", "status", "notes"];
   for (const key of allowed) {
     if (data[key] !== undefined) {
       fields.push(`${key} = ?`);
