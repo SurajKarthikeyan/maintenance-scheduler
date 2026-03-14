@@ -1,5 +1,0 @@
-[start]
-cmd = "npx serve -s dist -l 3000"
-
-[build]
-cmd = "npm run build"
