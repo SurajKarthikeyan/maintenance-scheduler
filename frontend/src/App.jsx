@@ -67,12 +67,12 @@ export default function App() {
           {/* Main content */}
           <main className="flex-1 ml-64 min-h-screen">
             <Routes>
-              <Route path="/"             element={<Dashboard />} />
-              <Route path="/machines"     element={<Machines />} />
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/machines" element={<Machines />} />
               <Route path="/machines/:id" element={<MachineDetail />} />
-              <Route path="/tasks"        element={<Tasks />} />
-              <Route path="/alerts"       element={<Alerts />} />
-            </Routes>
+              <Route path="/tasks" element={<Tasks />} />
+              <Route path="/alerts" element={<Alerts />} />
+            </Routes> 
           </main>
 
         </div>
