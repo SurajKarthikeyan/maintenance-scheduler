@@ -1,35 +1,51 @@
 require("dotenv").config();
 const express = require("express");
+const { createProxyMiddleware } = require("http-proxy-middleware");
 const cors = require("cors");
 const morgan = require("morgan");
-const machineRoutes = require("./routes/machines");
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 8080;
+
+const MACHINE_SERVICE_URL   = process.env.MACHINE_SERVICE_URL   || "http://localhost:3001";
+const SCHEDULER_SERVICE_URL = process.env.SCHEDULER_SERVICE_URL || "http://localhost:3002";
+const ALERT_SERVICE_URL     = process.env.ALERT_SERVICE_URL     || "http://localhost:3003";
 
 app.use(cors());
 app.use(morgan("dev"));
-app.use(express.json());
 
-// Health check
 app.get("/health", (req, res) => {
-  res.json({ service: "machine-service", status: "ok", timestamp: new Date() });
+  res.json({
+    service: "gateway",
+    status: "ok",
+    timestamp: new Date(),
+    upstreams: {
+      machines: MACHINE_SERVICE_URL,
+      scheduler: SCHEDULER_SERVICE_URL,
+      alerts: ALERT_SERVICE_URL,
+    },
+  });
 });
 
-// Routes
-app.use("/api/machines", machineRoutes);
+app.use("/api/machines", createProxyMiddleware({
+  target: MACHINE_SERVICE_URL,
+  changeOrigin: true,
+}));
 
-// 404 handler
+app.use("/api/tasks", createProxyMiddleware({
+  target: SCHEDULER_SERVICE_URL,
+  changeOrigin: true,
+}));
+
+app.use("/api/alerts", createProxyMiddleware({
+  target: ALERT_SERVICE_URL,
+  changeOrigin: true,
+}));
+
 app.use((req, res) => {
-  res.status(404).json({ error: "Route not found" });
-});
-
-// Error handler
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: "Internal server error", message: err.message });
+  res.status(404).json({ error: "No matching gateway route" });
 });
 
 app.listen(PORT, () => {
-  console.log(`[machine-service] Running on port ${PORT}`);
+  console.log(`[gateway] Running on port ${PORT}`);
 });
