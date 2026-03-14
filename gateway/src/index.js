@@ -11,6 +11,7 @@ const MACHINE_SERVICE_URL  = process.env.MACHINE_SERVICE_URL  || "http://localho
 const SCHEDULER_SERVICE_URL = process.env.SCHEDULER_SERVICE_URL || "http://localhost:3002";
 const ALERT_SERVICE_URL    = process.env.ALERT_SERVICE_URL    || "http://localhost:3003";
 
+app.options('*', cors())
 app.use(cors());
 app.use(morgan("dev"));
 
@@ -28,29 +29,35 @@ app.get("/health", (req, res) => {
   });
 });
 
-app.use("/api/machines", proxy(MACHINE_SERVICE_URL, {
-  parseReqBody: false,
-  proxyReqPathResolver: (req) => {
-    const path = `/api/machines${req.url}`
-    return path.endsWith('/') ? path.slice(0, -1) : path
-  },
-}))
+app.use("/api/machines", createProxyMiddleware({
+  target: MACHINE_SERVICE_URL,
+  changeOrigin: true,
+  on: {
+    proxyRes: (proxyRes) => {
+      proxyRes.headers['Access-Control-Allow-Origin'] = '*'
+    }
+  }
+}));
 
-app.use("/api/tasks", proxy(SCHEDULER_SERVICE_URL, {
-  parseReqBody: false,
-  proxyReqPathResolver: (req) => {
-    const path = `/api/tasks${req.url}`
-    return path.endsWith('/') ? path.slice(0, -1) : path
-  },
-}))
+app.use("/api/tasks", createProxyMiddleware({
+  target: SCHEDULER_SERVICE_URL,
+  changeOrigin: true,
+  on: {
+    proxyRes: (proxyRes) => {
+      proxyRes.headers['Access-Control-Allow-Origin'] = '*'
+    }
+  }
+}));
 
-app.use("/api/alerts", proxy(ALERT_SERVICE_URL, {
-  parseReqBody: false,
-  proxyReqPathResolver: (req) => {
-    const path = `/api/alerts${req.url}`
-    return path.endsWith('/') ? path.slice(0, -1) : path
-  },
-}))
+app.use("/api/alerts", createProxyMiddleware({
+  target: ALERT_SERVICE_URL,
+  changeOrigin: true,
+  on: {
+    proxyRes: (proxyRes) => {
+      proxyRes.headers['Access-Control-Allow-Origin'] = '*'
+    }
+  }
+}));
 
 app.use((req, res) => {
   res.status(404).json({ error: "No matching gateway route" });
