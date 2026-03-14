@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, MapPin, Calendar, Clock, Edit2, Plus } from 'lucide-react'
+import { ArrowLeft, MapPin, Calendar, Clock, Edit2, Plus, Trash2 } from 'lucide-react'
 import { machinesApi } from '../api/machines'
 import { tasksApi } from '../api/tasks'
 import StatusBadge from '../components/StatusBadge'
 import Modal from '../components/Modal'
+import { useParams, Link } from 'react-router-dom'
+
 
 const TASK_STATUSES = ['Scheduled', 'Pending', 'In Progress', 'Completed']
 const MACHINE_STATUSES = ['Operational', 'Needs Maintenance', 'Under Maintenance']
@@ -18,7 +19,6 @@ export default function MachineDetail() {
   const [taskForm, setTaskForm] = useState({ task_description: '', scheduled_date: '', status: 'Scheduled' })
   const [editForm, setEditForm] = useState({})
   const [editingTaskId, setEditingTaskId] = useState(null)
-
 
     const deleteTask = useMutation({
     mutationFn: (taskId) => tasksApi.delete(taskId),
@@ -45,6 +45,14 @@ export default function MachineDetail() {
         setEditingTaskId(null)
         setTaskForm({ task_description: '', scheduled_date: '', status: 'Scheduled' })
     },
+  })
+
+
+  const navigate = useNavigate()
+
+  const deleteMachine = useMutation({
+    mutationFn: () => machinesApi.delete(id),
+    onSuccess: () => { qc.invalidateQueries(['machines']); navigate('/machines') },
   })
 
   const updateMachine = useMutation({
@@ -80,6 +88,10 @@ export default function MachineDetail() {
             <button onClick={() => { setEditForm(machine); setShowEditModal(true) }}
               className="p-2 rounded-lg border border-gray-700 text-gray-400 hover:text-white hover:border-gray-600 transition-colors">
               <Edit2 size={15} />
+            </button>
+            <button onClick={() => { if(window.confirm('Delete this machine?')) deleteMachine.mutate() }}
+            className="p-2 rounded-lg border border-red-700 text-red-400 hover:text-red-300 hover:border-red-600 transition-colors">
+            <Trash2 size={15} />
             </button>
           </div>
         </div>
