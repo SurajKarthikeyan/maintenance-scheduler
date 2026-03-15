@@ -134,10 +134,4 @@ module.exports = {
   getOverdueTasks,
   getTasksByMachine,
 };
-```
-
----
-
-Now before you push, add this variable to **both** the machine service and scheduler service in Railway:
-```
 INTERNAL_API_KEY = mms-internal-2026
