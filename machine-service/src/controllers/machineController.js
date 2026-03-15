@@ -34,9 +34,6 @@ async function createMachine(req, res, next) {
     const machine = await Machine.createMachine(req.body);
     res.status(201).json({ success: true, data: machine });
   } catch (err) {
-    if (err.code === 'ER_DUP_ENTRY') {
-      return res.status(409).json({ success: false, error: 'A machine with that name already exists' });
-    }
     next(err);
   }
 }
