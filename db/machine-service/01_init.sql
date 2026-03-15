@@ -3,15 +3,17 @@
 -- ─────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS machines (
-  machine_id            INT           NOT NULL AUTO_INCREMENT,
-  name                  VARCHAR(100)  NOT NULL,
-  location              VARCHAR(150)  NOT NULL,
-  last_maintenance_date DATE          NOT NULL,
-  maintenance_interval_days INT       NOT NULL DEFAULT 30,
-  status                ENUM('Operational','Needs Maintenance','Under Maintenance') NOT NULL DEFAULT 'Operational',
-  created_at            TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at            TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (machine_id)
+  machine_id                INT           NOT NULL AUTO_INCREMENT,
+  name                      VARCHAR(100)  NOT NULL,
+  location                  VARCHAR(150)  NOT NULL,
+  last_maintenance_date     DATE          NOT NULL,
+  maintenance_interval_days INT           NOT NULL DEFAULT 30,
+  status                    ENUM('Operational','Needs Maintenance','Under Maintenance') NOT NULL DEFAULT 'Operational',
+  notes                     TEXT          DEFAULT NULL,
+  created_at                TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at                TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (machine_id),
+  UNIQUE KEY uk_machine_name (name)
 );
 
 -- Seed data (from case study Excel)
@@ -32,7 +34,6 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (user_id),
   INDEX idx_username (username)
-  notes TEXT DEFAULT NULL,
 );
 
 INSERT INTO users (username, password_hash, role) VALUES (
@@ -40,4 +41,3 @@ INSERT INTO users (username, password_hash, role) VALUES (
   '$2b$12$fHDLoJkPjcEvS1ADB2/YEudvaM8qUv1OlvpuZpUUfqPWr3tdmHbRi',
   'admin'
 );
-
