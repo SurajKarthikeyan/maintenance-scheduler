@@ -1,12 +1,20 @@
 const jwt = require("jsonwebtoken");
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_in_production";
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY;
 
 /**
  * requireAuth — verifies the JWT token on every protected request
+ * Also accepts internal service calls via x-internal-key header
  * Attaches the decoded user object to req.user
  */
 function requireAuth(req, res, next) {
+  // Allow internal service-to-service calls
+  if (INTERNAL_API_KEY && req.headers["x-internal-key"] === INTERNAL_API_KEY) {
+    req.user = { role: "internal" };
+    return next();
+  }
+
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
