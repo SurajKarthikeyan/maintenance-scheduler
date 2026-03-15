@@ -9,7 +9,7 @@ import Modal from '../components/Modal'
 
 const STATUSES = ['Operational', 'Needs Maintenance', 'Under Maintenance']
 
-function MachineForm({ onSubmit, onClose, loading }) {
+function MachineForm({ onSubmit, onClose, loading, error }) {
   const [form, setForm] = useState({
     name: '', location: '', last_maintenance_date: '',
     maintenance_interval_days: 30, status: 'Operational',
@@ -47,6 +47,13 @@ function MachineForm({ onSubmit, onClose, loading }) {
           {STATUSES.map(s => <option key={s}>{s}</option>)}
         </select>
       </div>
+
+      {error && (
+        <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+          {error}
+        </p>
+      )}
+
       <div className="flex gap-3 pt-2">
         <button type="button" onClick={onClose}
           className="flex-1 px-4 py-2 rounded-lg border border-gray-700 text-gray-400 text-sm hover:bg-gray-800 transition-colors">
@@ -66,6 +73,7 @@ export default function Machines() {
   const [statusFilter, setStatusFilter] = useState('All')
   const [sortBy, setSortBy] = useState('default')
   const [showModal, setShowModal] = useState(false)
+  const [createError, setCreateError] = useState(null)
   const qc = useQueryClient()
   const user = JSON.parse(localStorage.getItem('user') || 'null')
 
@@ -76,7 +84,18 @@ export default function Machines() {
 
   const createMutation = useMutation({
     mutationFn: machinesApi.create,
-    onSuccess: () => { qc.invalidateQueries(['machines']); setShowModal(false) },
+    onSuccess: () => {
+      qc.invalidateQueries(['machines'])
+      setShowModal(false)
+      setCreateError(null)
+    },
+    onError: (err) => {
+      if (err.response?.status === 409) {
+        setCreateError('A machine with that name already exists')
+      } else {
+        setCreateError('Something went wrong. Please try again.')
+      }
+    },
   })
 
   const machines = (data?.data?.data || []).filter(m => {
@@ -180,11 +199,12 @@ export default function Machines() {
       )}
 
       {showModal && (
-        <Modal title="Add New Machine" onClose={() => setShowModal(false)}>
+        <Modal title="Add New Machine" onClose={() => { setShowModal(false); setCreateError(null) }}>
           <MachineForm
-            onClose={() => setShowModal(false)}
+            onClose={() => { setShowModal(false); setCreateError(null) }}
             loading={createMutation.isPending}
             onSubmit={(data) => createMutation.mutate(data)}
+            error={createError}
           />
         </Modal>
       )}
