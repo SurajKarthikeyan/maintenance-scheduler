@@ -134,4 +134,3 @@ module.exports = {
   getOverdueTasks,
   getTasksByMachine,
 };
-INTERNAL_API_KEY = mms-internal-2026
