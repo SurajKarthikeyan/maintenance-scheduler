@@ -14,8 +14,9 @@ const TASK_TO_MACHINE_STATUS = {
 async function syncMachineStatus(machineId, taskStatus) {
   const machineStatus = TASK_TO_MACHINE_STATUS[taskStatus];
   if (!machineStatus) return;
+  console.log(`[scheduler] Syncing machine ${machineId} to status: ${machineStatus}`);
   try {
-    await axios.patch(`${MACHINE_SERVICE_URL}/api/machines/${machineId}`, {
+    const response = await axios.patch(`${MACHINE_SERVICE_URL}/api/machines/${machineId}`, {
       status: machineStatus,
       ...(taskStatus === "Completed" && {
         last_maintenance_date: new Date().toISOString().split("T")[0],
@@ -26,11 +27,11 @@ async function syncMachineStatus(machineId, taskStatus) {
         "x-internal-key": INTERNAL_API_KEY,
       },
     });
+    console.log(`[scheduler] Sync response: ${response.status}`);
   } catch (err) {
     console.error(`[scheduler] Failed to sync machine ${machineId} status:`, err.message);
   }
 }
-
 async function listTasks(req, res, next) {
   try {
     const filters = {};
