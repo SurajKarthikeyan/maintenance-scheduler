@@ -5,7 +5,23 @@ const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY;
 const internalHeaders = {
   headers: { "x-internal-key": INTERNAL_API_KEY }
 };
+
 const MACHINE_SERVICE_URL = process.env.MACHINE_SERVICE_URL || "http://localhost:3001";
+const SCHEDULER_SERVICE_URL = process.env.SCHEDULER_SERVICE_URL || "http://localhost:3002";
+
+async function hasActiveInProgressTask(machineId) {
+  try {
+    const { data } = await axios.get(
+      `${SCHEDULER_SERVICE_URL}/api/tasks/machine/${machineId}`,
+      internalHeaders
+    );
+    const tasks = data.data || [];
+    return tasks.some(t => t.status === "In Progress");
+  } catch (err) {
+    console.error(`[alert-service] Could not fetch tasks for machine ${machineId}:`, err.message);
+    return false;
+  }
+}
 
 async function runOverdueCheck() {
   try {
@@ -23,7 +39,17 @@ async function runOverdueCheck() {
 
         await Alert.upsertAlert(machine.machine_id, machine.name, alertType, message, daysOverdue);
 
-        if (machine.status !== 'Under Maintenance') {
+        // Only respect Under Maintenance if there is actually an In Progress task
+        if (machine.status === 'Under Maintenance') {
+          const activeTask = await hasActiveInProgressTask(machine.machine_id);
+          if (!activeTask) {
+            await axios.patch(
+              `${MACHINE_SERVICE_URL}/api/machines/${machine.machine_id}`,
+              { status: 'Needs Maintenance' },
+              internalHeaders
+            );
+          }
+        } else {
           await axios.patch(
             `${MACHINE_SERVICE_URL}/api/machines/${machine.machine_id}`,
             { status: 'Needs Maintenance' },
@@ -47,6 +73,18 @@ async function runOverdueCheck() {
             { status: 'Operational' },
             internalHeaders
           );
+        }
+
+        // If Under Maintenance but no active tasks, reset to Operational
+        if (machine.status === 'Under Maintenance') {
+          const activeTask = await hasActiveInProgressTask(machine.machine_id);
+          if (!activeTask) {
+            await axios.patch(
+              `${MACHINE_SERVICE_URL}/api/machines/${machine.machine_id}`,
+              { status: 'Operational' },
+              internalHeaders
+            );
+          }
         }
       }
     }
