@@ -1,6 +1,10 @@
 const axios = require("axios");
 const Alert = require("../models/Alert");
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY;
 
+const internalHeaders = {
+  headers: { "x-internal-key": INTERNAL_API_KEY }
+};
 const MACHINE_SERVICE_URL = process.env.MACHINE_SERVICE_URL || "http://localhost:3001";
 
 /**
