@@ -18,7 +18,7 @@ const MACHINE_SERVICE_URL = process.env.MACHINE_SERVICE_URL || "http://localhost
 async function runOverdueCheck() {
   try {
     // Fetch all machines from Machine Service
-    const { data } = await axios.get(`${MACHINE_SERVICE_URL}/api/machines`);
+    const { data } = await axios.get(`${MACHINE_SERVICE_URL}/api/machines`, internalHeaders);
     const machines = data.data || [];
 
     for (const machine of machines) {
