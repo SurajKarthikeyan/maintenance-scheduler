@@ -32,6 +32,7 @@ async function syncMachineStatus(machineId, taskStatus) {
     console.error(`[scheduler] Failed to sync machine ${machineId} status:`, err.message);
   }
 }
+
 async function listTasks(req, res, next) {
   try {
     const filters = {};
@@ -65,7 +66,6 @@ async function createTask(req, res, next) {
     }
     const task = await Task.createTask(req.body);
 
-    // If task is created with a status that requires a machine sync, trigger it
     if (req.body.status) {
       await syncMachineStatus(machine_id, req.body.status);
     }
@@ -75,6 +75,7 @@ async function createTask(req, res, next) {
     next(err);
   }
 }
+
 async function updateTask(req, res, next) {
   try {
     const existing = await Task.getTaskById(req.params.id);
@@ -83,7 +84,18 @@ async function updateTask(req, res, next) {
     const updated = await Task.updateTask(req.params.id, req.body);
 
     if (req.body.status && req.body.status !== existing.status) {
-      await syncMachineStatus(existing.machine_id, req.body.status);
+      if (req.body.status === "Completed") {
+        // Before setting Operational, check no other tasks are still In Progress
+        const allTasks = await Task.getTasksByMachine(existing.machine_id);
+        const stillInProgress = allTasks.some(t =>
+          t.task_id !== existing.task_id && t.status === "In Progress"
+        );
+        if (!stillInProgress) {
+          await syncMachineStatus(existing.machine_id, req.body.status);
+        }
+      } else {
+        await syncMachineStatus(existing.machine_id, req.body.status);
+      }
     }
 
     res.json({ success: true, data: updated });
