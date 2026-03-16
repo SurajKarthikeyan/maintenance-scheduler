@@ -64,12 +64,17 @@ async function createTask(req, res, next) {
       });
     }
     const task = await Task.createTask(req.body);
+
+    // If task is created with a status that requires a machine sync, trigger it
+    if (req.body.status) {
+      await syncMachineStatus(machine_id, req.body.status);
+    }
+
     res.status(201).json({ success: true, data: task });
   } catch (err) {
     next(err);
   }
 }
-
 async function updateTask(req, res, next) {
   try {
     const existing = await Task.getTaskById(req.params.id);
